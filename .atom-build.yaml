@@ -1,0 +1,7 @@
+cmd: "dub"
+name: "dub run"
+args:
+  - "run"
+errorMatch:
+  - "(?<file>\\S+)\\((?<line>\\d+),(?<col>\\d+)\\): Error: (?<message>.+)"
+  - "Gtk-ERROR \\*\\*: \\d{2}:\\d{2}:\\d{2}\\.\\d{3}: .+: (?<file>\\S+):(?<line>\\d+):(?<col>\\d+)"

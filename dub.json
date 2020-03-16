@@ -4,7 +4,7 @@
 	],
 	"copyright": "Copyright © 2020, Thomas",
 	"dependencies": {
-		"gtk-d": "~>3.9.0"
+		"gtk-d:gtkd": "~>3.9.0"
 	},
 	"description": "A calculator for operations in Kerbal Space Program",
 	"license": "proprietary",
