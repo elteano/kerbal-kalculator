@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/kerbal-kalculator
+kerbal-kalculator.so
+kerbal-kalculator.dylib
+kerbal-kalculator.dll
+kerbal-kalculator.a
+kerbal-kalculator.lib
+kerbal-kalculator-test-*
+*.exe
+*.o
+*.obj
+*.lst
