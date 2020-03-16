@@ -1,4 +1,6 @@
+import std.algorithm;
 import std.conv;
+import std.format;
 import std.functional;
 import std.math;
 import std.stdio;
@@ -17,6 +19,7 @@ import gtk.HBox;
 import gtk.Label;
 import gtk.Main;
 import gtk.MainWindow;
+import gtk.TextView;
 import gtk.VBox;
 import gtk.Widget;
 import gtk.Window;
@@ -37,6 +40,8 @@ BodyData[string] bodyLookup;
 static this() {
   bodyLookup["Kerbin"] = BodyData(5.2915158e22, 600000);
   bodyLookup["Mun"] = BodyData(9.7599066e20, 200000);
+  bodyLookup["Minmus"] = BodyData(2.6457580e19, 60000);
+  bodyLookup["Duna"] = BodyData(4.5154270e21, 320.0e3);
 }
 
 void main(string[] args)
@@ -59,23 +64,87 @@ bool quitto(Event event, Widget widget)
 
 void onCalculate(Button button)
 {
-  Entry ap1Entry = cast(Entry) builder.getObject("initialApsis1");
-  Entry ap2Entry = cast(Entry) builder.getObject("initialApsis2");
+  Entry apI1Entry = cast(Entry) builder.getObject("initialApsis1");
+  Entry apI2Entry = cast(Entry) builder.getObject("initialApsis2");
+  Entry apE1Entry = cast(Entry) builder.getObject("endApsis1");
+  Entry apE2Entry = cast(Entry) builder.getObject("endApsis2");
   ComboBoxText orbitedObject =
     cast(ComboBoxText) builder.getObject("orbited-body-combo");
   string obName = orbitedObject.getActiveText();
   auto lookup = bodyLookup[obName];
   // Do calculations
-  real gm = lookup.mass * con_g;
-  writefln("Mass: %f", lookup.mass);
-  writefln("G: %e", con_g);
-  writefln("GM: %f", gm);
-  real ap1Val = to!real (ap1Entry.getText()) + lookup.radius;
-  real ap2Val = to!real (ap2Entry.getText()) + lookup.radius;
-  stdout.writefln("%f, %f", ap1Val, ap2Val);
-  real apAvg = ap1Val / 2 + ap2Val / 2;
-  real velAp1 = sqrt(gm * (2 / ap1Val - 1 / apAvg));
-  real velAp2 = sqrt(gm * (2 / ap2Val - 1 / apAvg));
-  stdout.writefln("%f, %f", velAp1, velAp2);
+  real apI1Val = to!real (apI1Entry.getText()) + lookup.radius;
+  real apI2Val = to!real (apI2Entry.getText()) + lookup.radius;
+
+  real apE1Val = to!real (apE1Entry.getText()) + lookup.radius;
+  real apE2Val = to!real (apE2Entry.getText()) + lookup.radius;
+
+  auto vels = calculateVelocities(apI1Val, apI2Val, lookup.mass);
+  auto vels2 = calculateVelocities(apE1Val, apE2Val, lookup.mass);
+  auto raise1 = calculateDeltaVShift(apI1Val, apI2Val, apE2Val, lookup.mass);
+
+  updateVelocityLabel("init1Vel", vels[0]);
+  updateVelocityLabel("init2Vel", vels[1]);
+  updateVelocityLabel("end1Vel", vels2[0]);
+  updateVelocityLabel("end2Vel", vels2[1]);
+
+  auto vels1_1 = calculateVelocities(apI1Val, apE1Val, lookup.mass);
+  auto vels1_2 = calculateVelocities(apI1Val, apE2Val, lookup.mass);
+  auto vels2_1 = calculateVelocities(apI2Val, apE1Val, lookup.mass);
+  auto vels2_2 = calculateVelocities(apI2Val, apE2Val, lookup.mass);
+
+  real[] dv1_1 = [abs(vels[0] - vels1_1[0]), abs(vels1_1[1] - vels2[0])];
+  real[] dv1_2 = [abs(vels[0] - vels1_2[0]), abs(vels1_2[1] - vels2[1])];
+  real[] dv2_1 = [abs(vels[1] - vels2_1[0]), abs(vels2_1[1] - vels2[0])];
+  real[] dv2_2 = [abs(vels[1] - vels2_2[0]), abs(vels2_2[1] - vels2[1])];
+  auto dv_sums = [sum(dv1_1), sum(dv1_2), sum(dv2_1), sum(dv2_2)];
+  auto dv_lookup = [dv1_1, dv1_2, dv2_1, dv2_2];
+  auto vels_lookup = [
+    [vels1_1[0], vels2[0]],
+    [vels1_2[0], vels2[1]],
+    [vels2_1[0], vels2[0]],
+    [vels2_2[0], vels2[1]],
+  ];
+
+  auto mInd = minIndex(dv_sums);
+  auto min = dv_sums[mInd];
+  size_t firstBurnPoint = mInd / 2 + 1;
+  auto firstBurnAmount = dv_lookup[mInd][0];
+  auto secondBurnAmount = dv_lookup[mInd][1];
+  auto firstBurnDest = vels_lookup[mInd][0];
+  auto secondBurnDest = vels_lookup[mInd][1];
+
+  updateVelocityLabel("req-dv", min);
+
+  string fulltext = format("Start at point %d. Burn %.2f dV to a target " ~
+                           "velocity of %.2f. At the other point, burn by " ~
+                           "%.2f dV to a target velocity of %.2f.",
+                           firstBurnPoint, firstBurnAmount, firstBurnDest,
+                           secondBurnAmount, secondBurnDest);
+  TextView instructions = cast(TextView) builder.getObject("instructions");
+  instructions.getBuffer().setText(fulltext);
+  stdout.writeln(fulltext);
   stdout.flush();
+}
+
+void updateVelocityLabel(string labelId, real vel)
+{
+  Label label = cast(Label) builder.getObject(labelId);
+  label.setText(format("%.2f", vel));
+}
+
+Tuple!(real, real) calculateVelocities(real apsis1, real apsis2, real bodyMass)
+{
+  real gm = bodyMass * con_g;
+  real apAvg = apsis1 / 2 + apsis2 / 2;
+  real velAp1 = sqrt(gm * (2 / apsis1 - 1 / apAvg));
+  real velAp2 = sqrt(gm * (2 / apsis2 - 1 / apAvg));
+  return Tuple!(real, real)(velAp1, velAp2);
+}
+
+real calculateDeltaVShift(real apoFire, real apoStart, real apoEnd, real bodyMass)
+{
+  auto init_vels = calculateVelocities(apoFire, apoStart, bodyMass);
+  auto end_vels = calculateVelocities(apoFire, apoEnd, bodyMass);
+  return abs(init_vels[0] - end_vels[0]);
 }

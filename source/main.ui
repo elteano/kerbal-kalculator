@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <object class="GtkWindow" id="main-window">
+    <property name="title">Kerbal Kalculator</property>
+    <property name="border-width">10</property>
     <child>
       <object class="GtkHBox" id="hbox">
         <property name="homogeneous">false</property>
@@ -34,6 +36,8 @@
                         <items>
                           <item id="kerbin">Kerbin</item>
                           <item id="mun">Mun</item>
+                          <item id="minmus">Minmus</item>
+                          <item id="duna">Duna</item>
                         </items>
                       </object>
                       <packing>
@@ -91,9 +95,6 @@
                           </packing>
                         </child>
                       </object>
-                      <packing>
-                        <property name="fill">false</property>
-                      </packing>
                     </child>
                   </object>
                   <packing>
@@ -162,10 +163,6 @@
                   </packing>
                 </child>
               </object>
-              <packing>
-                <property name="fill">false</property>
-                <property name="expand">false</property>
-              </packing>
             </child>
           </object>
           <packing>
@@ -181,8 +178,127 @@
               <object class="GtkVBox">
                 <child>
                   <object class="GtkFrame">
-                    <property name="label">Order of Operations</property>
+                    <property name="label">Velocities</property>
                     <property name="border-width">5</property>
+                    <child>
+                      <object class="GtkGrid">
+                        <property name="border-width">5</property>
+                        <property name="column-spacing">10</property>
+                        <property name="column-homogeneous">false</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Initial Apsis 1</property>
+                          </object>
+                          <packing>
+                            <property name="left-attach">0</property>
+                            <property name="top-attach">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="init1Vel"/>
+                          <packing>
+                            <property name="left-attach">1</property>
+                            <property name="top-attach">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Initial Apsis 2</property>
+                          </object>
+                          <packing>
+                            <property name="left-attach">0</property>
+                            <property name="top-attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="init2Vel"/>
+                          <packing>
+                            <property name="left-attach">1</property>
+                            <property name="top-attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">End Apsis 1</property>
+                          </object>
+                          <packing>
+                            <property name="left-attach">0</property>
+                            <property name="top-attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="end1Vel"/>
+                          <packing>
+                            <property name="left-attach">1</property>
+                            <property name="top-attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">End Apsis 2</property>
+                          </object>
+                          <packing>
+                            <property name="left-attach">0</property>
+                            <property name="top-attach">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="end2Vel"/>
+                          <packing>
+                            <property name="left-attach">1</property>
+                            <property name="top-attach">3</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="fill">false</property>
+                    <property name="expand">false</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkFrame">
+                    <property name="label">Efficient Requirements</property>
+                    <property name="border-width">5</property>
+                    <child>
+                      <object class="GtkVBox">
+                        <property name="border-width">5</property>
+                        <child>
+                          <object class="GtkGrid">
+                            <property name="border-width">5</property>
+                            <property name="column-homogeneous">false</property>
+                            <property name="column-spacing">10</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="label">Required dV</property>
+                              </object>
+                              <packing>
+                                <property name="left-attach">0</property>
+                                <property name="top-attach">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="req-dv"/>
+                              <packing>
+                                <property name="left-attach">1</property>
+                                <property name="top-attach">0</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                        <child >
+                          <object class="GtkTextView" id="instructions">
+                            <property name="editable">false</property>
+                            <property name="wrap-mode">GTK_WRAP_WORD</property>
+                          </object>
+                          <packing>
+                            <property name="fill">true</property>
+                            <property name="expand">true</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
                   </object>
                   <packing>
                     <property name="fill">false</property>
@@ -190,10 +306,6 @@
                   </packing>
                 </child>
               </object>
-              <packing>
-                <property name="fill">false</property>
-                <property name="expand">false</property>
-              </packing>
             </child>
           </object>
           <packing>
