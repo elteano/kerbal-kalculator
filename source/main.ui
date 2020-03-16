@@ -32,13 +32,6 @@
                     <child>
                       <object class="GtkComboBoxText" id="orbited-body-combo">
                         <property name="width-request">150</property>
-                        <property name="active">0</property>
-                        <items>
-                          <item id="kerbin">Kerbin</item>
-                          <item id="mun">Mun</item>
-                          <item id="minmus">Minmus</item>
-                          <item id="duna">Duna</item>
-                        </items>
                       </object>
                       <packing>
                         <property name="left-attach">1</property>

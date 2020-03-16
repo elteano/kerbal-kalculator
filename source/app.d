@@ -1,7 +1,9 @@
 import std.algorithm;
 import std.conv;
+import std.file;
 import std.format;
 import std.functional;
+import std.json;
 import std.math;
 import std.stdio;
 import std.typecons;
@@ -37,20 +39,22 @@ struct BodyData
 
 BodyData[string] bodyLookup;
 
-static this() {
-  bodyLookup["Kerbin"] = BodyData(5.2915158e22, 600000);
-  bodyLookup["Mun"] = BodyData(9.7599066e20, 200000);
-  bodyLookup["Minmus"] = BodyData(2.6457580e19, 60000);
-  bodyLookup["Duna"] = BodyData(4.5154270e21, 320.0e3);
-}
-
 void main(string[] args)
 {
   Main.init(args);
-  builder = new Builder("source/main.ui");
+  builder = new Builder("main.ui");
   Window win = cast(Window) builder.getObject("main-window");
   win.addOnDelete(toDelegate(&quitto));
   Button calculateButton = cast(Button) builder.getObject("calculate-button");
+  // Load Json
+  auto val = parseJSON(cast(char[])read("planets.json"));
+  ComboBoxText planetsCombo = cast(ComboBoxText) builder.getObject("orbited-body-combo");
+  foreach (planet; val.array)
+  {
+    planetsCombo.appendText(planet["name"].str);
+    bodyLookup[planet["name"].str] = BodyData(planet["mass"].get!real, planet["radius"].get!real);
+  }
+  planetsCombo.setActive(0);
   calculateButton.addOnClicked(toDelegate(&onCalculate));
   win.showAll();
   Main.run();

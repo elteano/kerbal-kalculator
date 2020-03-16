@@ -13,3 +13,4 @@ kerbal-kalculator-test-*
 *.o
 *.obj
 *.lst
+build

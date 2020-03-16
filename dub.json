@@ -8,5 +8,8 @@
 	},
 	"description": "A calculator for operations in Kerbal Space Program",
 	"license": "proprietary",
-	"name": "kerbal-kalculator"
+	"name": "kerbal-kalculator",
+	"copyFiles": ["source/main.ui", "source/planets.json"],
+	"targetPath": "build",
+	"workingDirectory": "build"
 }

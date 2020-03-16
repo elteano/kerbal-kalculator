@@ -1,0 +1,36 @@
+[{
+    "name": "Kerbin",
+    "mass": 5.2915158e22,
+    "radius": 600000
+  },
+  {
+    "name": "Mun",
+    "mass": 9.7599066e20,
+    "radius": 200000
+  },
+  {
+    "name": "Minmus",
+    "mass": 2.6457580e19,
+    "radius": 60000
+  },
+  {
+    "name": "Duna",
+    "mass": 4.5154270e21,
+    "radius": 320.0e3
+  },
+  {
+    "name": "Ike",
+    "mass": 2.7821615e20,
+    "radius": 130000
+  },
+  {
+    "name": "Eve",
+    "mass": 1.2243980e23,
+    "radius": 700e3
+  },
+  {
+    "name": "Gilly",
+    "mass": 1.2420363e17,
+    "radius": 13e3
+  }
+]
