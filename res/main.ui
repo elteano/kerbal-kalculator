@@ -5,10 +5,10 @@
     <property name="border-width">10</property>
     <child>
       <object class="GtkNotebook">
-        <property name="border-width">10</property>
         <!-- Orbit Change content -->
         <child>
           <object class="GtkHBox" id="hbox">
+            <property name="border-width">5</property>
             <property name="homogeneous">false</property>
             <property name="spacing">10</property>
             <!-- Inputs frame -->
@@ -320,6 +320,7 @@
         <!-- Delta V Calculator -->
         <child>
           <object class="GtkGrid">
+            <property name="border-width">5</property>
             <property name="row-spacing">5</property>
             <property name="column-spacing">10</property>
             <property name="column-homogeneous">false</property>
