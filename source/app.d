@@ -9,6 +9,7 @@ import std.stdio;
 import std.typecons;
 
 import gdk.Event;
+import gdk.RGBA;
 
 import gtk.Builder;
 import gtk.Button;
@@ -31,6 +32,10 @@ Builder builder;
 immutable real dVC = 9.81;
 immutable real con_g = 6.67E-11;
 
+RGBA COLOR_RED;
+RGBA COLOR_BLACK;
+RGBA COLOR_CLEAR;
+
 struct BodyData
 {
   real mass;
@@ -41,10 +46,18 @@ BodyData[string] bodyLookup;
 
 void main(string[] args)
 {
+  COLOR_RED = new RGBA(.9, .1, .1);
+  COLOR_BLACK = new RGBA(0, 0, 0, 1);
+  COLOR_CLEAR = new RGBA();
+
   Main.init(args);
   builder = new Builder("main.ui");
   Window win = cast(Window) builder.getObject("main-window");
   win.addOnDelete(toDelegate(&quitto));
+
+  //
+  // Setup Oribttal calculation
+  //
   Button calculateButton = cast(Button) builder.getObject("calculate-button");
   // Load Json
   auto val = parseJSON(cast(char[])read("planets.json"));
@@ -56,6 +69,13 @@ void main(string[] args)
   }
   planetsCombo.setActive(0);
   calculateButton.addOnClicked(toDelegate(&onCalculate));
+
+  //
+  // Setup Delta V calculation
+  //
+  Button dvCalculateButton = cast(Button) builder.getObject("calc-dv-button");
+  dvCalculateButton.addOnClicked(toDelegate(&onCalculateDv));
+
   win.showAll();
   Main.run();
 }
@@ -151,4 +171,42 @@ real calculateDeltaVShift(real apoFire, real apoStart, real apoEnd, real bodyMas
   auto init_vels = calculateVelocities(apoFire, apoStart, bodyMass);
   auto end_vels = calculateVelocities(apoFire, apoEnd, bodyMass);
   return abs(init_vels[0] - end_vels[0]);
+}
+
+bool tryGetRealFromEntry(string id, out real val)
+{
+  Entry getMe = cast(Entry) builder.getObject(id);
+  try
+  {
+    val = to!real (getMe.getText());
+  }
+  catch (ConvException e)
+  {
+    getMe.overrideBackgroundColor(cast(GtkStateFlags) 0, COLOR_RED);
+    return false;
+  }
+  getMe.overrideBackgroundColor(cast(GtkStateFlags) 0, COLOR_CLEAR);
+  return true;
+}
+
+void onCalculateDv(Button button)
+{
+  real inputIsp, inputWetMass, inputDryMass, calcDv;
+  Label outputLabel;
+
+  outputLabel = cast(Label) builder.getObject("calc-dv-label");
+  // Perform conversions
+  bool ispGood = tryGetRealFromEntry("isp-entry", inputIsp);
+  bool wetGood = tryGetRealFromEntry("wet-mass-entry", inputWetMass);
+  bool dryGood = tryGetRealFromEntry("dry-mass-entry", inputDryMass);
+  if (ispGood && wetGood && dryGood)
+  {
+    calcDv = calculateShipDeltaV(inputIsp, inputWetMass, inputDryMass);
+    outputLabel.setText(format("%.2f", calcDv));
+  }
+}
+
+real calculateShipDeltaV(real isp, real wetMass, real dryMass)
+{
+  return dVC * isp * log(wetMass / dryMass);
 }
