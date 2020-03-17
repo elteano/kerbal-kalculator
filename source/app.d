@@ -88,6 +88,7 @@ bool quitto(Event event, Widget widget)
 
 void onCalculate(Button button)
 {
+  real apI1Val, apI2Val, apE1Val, apE2Val;
   Entry apI1Entry = cast(Entry) builder.getObject("initialApsis1");
   Entry apI2Entry = cast(Entry) builder.getObject("initialApsis2");
   Entry apE1Entry = cast(Entry) builder.getObject("endApsis1");
@@ -97,58 +98,65 @@ void onCalculate(Button button)
   string obName = orbitedObject.getActiveText();
   auto lookup = bodyLookup[obName];
   // Do calculations
-  real apI1Val = to!real (apI1Entry.getText()) + lookup.radius;
-  real apI2Val = to!real (apI2Entry.getText()) + lookup.radius;
+  bool apI1Good = tryGetRealFromEntry("initialApsis1", apI1Val);
+  apI1Val += lookup.radius;
+  bool apI2Good = tryGetRealFromEntry("initialApsis2", apI2Val);
+  apI2Val += lookup.radius;
 
-  real apE1Val = to!real (apE1Entry.getText()) + lookup.radius;
-  real apE2Val = to!real (apE2Entry.getText()) + lookup.radius;
+  bool apE1Good = tryGetRealFromEntry("endApsis1", apE1Val);
+  apE1Val += lookup.radius;
+  bool apE2Good = tryGetRealFromEntry("endApsis2", apE2Val);
+  apE2Val += lookup.radius;
 
-  auto vels = calculateVelocities(apI1Val, apI2Val, lookup.mass);
-  auto vels2 = calculateVelocities(apE1Val, apE2Val, lookup.mass);
-  auto raise1 = calculateDeltaVShift(apI1Val, apI2Val, apE2Val, lookup.mass);
+  if (apI1Good && apI2Good && apE1Good && apE2Good)
+  {
+    auto vels = calculateVelocities(apI1Val, apI2Val, lookup.mass);
+    auto vels2 = calculateVelocities(apE1Val, apE2Val, lookup.mass);
+    auto raise1 = calculateDeltaVShift(apI1Val, apI2Val, apE2Val, lookup.mass);
 
-  updateVelocityLabel("init1Vel", vels[0]);
-  updateVelocityLabel("init2Vel", vels[1]);
-  updateVelocityLabel("end1Vel", vels2[0]);
-  updateVelocityLabel("end2Vel", vels2[1]);
+    updateVelocityLabel("init1Vel", vels[0]);
+    updateVelocityLabel("init2Vel", vels[1]);
+    updateVelocityLabel("end1Vel", vels2[0]);
+    updateVelocityLabel("end2Vel", vels2[1]);
 
-  auto vels1_1 = calculateVelocities(apI1Val, apE1Val, lookup.mass);
-  auto vels1_2 = calculateVelocities(apI1Val, apE2Val, lookup.mass);
-  auto vels2_1 = calculateVelocities(apI2Val, apE1Val, lookup.mass);
-  auto vels2_2 = calculateVelocities(apI2Val, apE2Val, lookup.mass);
+    auto vels1_1 = calculateVelocities(apI1Val, apE1Val, lookup.mass);
+    auto vels1_2 = calculateVelocities(apI1Val, apE2Val, lookup.mass);
+    auto vels2_1 = calculateVelocities(apI2Val, apE1Val, lookup.mass);
+    auto vels2_2 = calculateVelocities(apI2Val, apE2Val, lookup.mass);
 
-  real[] dv1_1 = [abs(vels[0] - vels1_1[0]), abs(vels1_1[1] - vels2[0])];
-  real[] dv1_2 = [abs(vels[0] - vels1_2[0]), abs(vels1_2[1] - vels2[1])];
-  real[] dv2_1 = [abs(vels[1] - vels2_1[0]), abs(vels2_1[1] - vels2[0])];
-  real[] dv2_2 = [abs(vels[1] - vels2_2[0]), abs(vels2_2[1] - vels2[1])];
-  auto dv_sums = [sum(dv1_1), sum(dv1_2), sum(dv2_1), sum(dv2_2)];
-  auto dv_lookup = [dv1_1, dv1_2, dv2_1, dv2_2];
-  auto vels_lookup = [
-    [vels1_1[0], vels2[0]],
-    [vels1_2[0], vels2[1]],
-    [vels2_1[0], vels2[0]],
-    [vels2_2[0], vels2[1]],
-  ];
+    real[] dv1_1 = [abs(vels[0] - vels1_1[0]), abs(vels1_1[1] - vels2[0])];
+    real[] dv1_2 = [abs(vels[0] - vels1_2[0]), abs(vels1_2[1] - vels2[1])];
+    real[] dv2_1 = [abs(vels[1] - vels2_1[0]), abs(vels2_1[1] - vels2[0])];
+    real[] dv2_2 = [abs(vels[1] - vels2_2[0]), abs(vels2_2[1] - vels2[1])];
+    auto dv_sums = [sum(dv1_1), sum(dv1_2), sum(dv2_1), sum(dv2_2)];
+    auto dv_lookup = [dv1_1, dv1_2, dv2_1, dv2_2];
+    auto vels_lookup = [
+      [vels1_1[0], vels2[0]],
+      [vels1_2[0], vels2[1]],
+      [vels2_1[0], vels2[0]],
+      [vels2_2[0], vels2[1]],
+    ];
 
-  auto mInd = minIndex(dv_sums);
-  auto min = dv_sums[mInd];
-  size_t firstBurnPoint = mInd / 2 + 1;
-  auto firstBurnAmount = dv_lookup[mInd][0];
-  auto secondBurnAmount = dv_lookup[mInd][1];
-  auto firstBurnDest = vels_lookup[mInd][0];
-  auto secondBurnDest = vels_lookup[mInd][1];
+    auto mInd = minIndex(dv_sums);
+    auto min = dv_sums[mInd];
+    size_t firstBurnPoint = mInd / 2 + 1;
+    auto firstBurnAmount = dv_lookup[mInd][0];
+    auto secondBurnAmount = dv_lookup[mInd][1];
+    auto firstBurnDest = vels_lookup[mInd][0];
+    auto secondBurnDest = vels_lookup[mInd][1];
 
-  updateVelocityLabel("req-dv", min);
+    updateVelocityLabel("req-dv", min);
 
-  string fulltext = format("Start at point %d. Burn %.2f dV to a target " ~
-                           "velocity of %.2f. At the other point, burn by " ~
-                           "%.2f dV to a target velocity of %.2f.",
-                           firstBurnPoint, firstBurnAmount, firstBurnDest,
-                           secondBurnAmount, secondBurnDest);
-  TextView instructions = cast(TextView) builder.getObject("instructions");
-  instructions.getBuffer().setText(fulltext);
-  stdout.writeln(fulltext);
-  stdout.flush();
+    string fulltext = format("Start at point %d. Burn %.2f dV to a target " ~
+                             "velocity of %.2f. At the other point, burn by " ~
+                             "%.2f dV to a target velocity of %.2f.",
+                             firstBurnPoint, firstBurnAmount, firstBurnDest,
+                             secondBurnAmount, secondBurnDest);
+    TextView instructions = cast(TextView) builder.getObject("instructions");
+    instructions.getBuffer().setText(fulltext);
+    stdout.writeln(fulltext);
+    stdout.flush();
+  }
 }
 
 void updateVelocityLabel(string labelId, real vel)
