@@ -114,10 +114,10 @@ void onCalculate(Button button)
     auto vels2 = calculateVelocities(apE1Val, apE2Val, lookup.mass);
     auto raise1 = calculateDeltaVShift(apI1Val, apI2Val, apE2Val, lookup.mass);
 
-    updateVelocityLabel("init1Vel", vels[0]);
-    updateVelocityLabel("init2Vel", vels[1]);
-    updateVelocityLabel("end1Vel", vels2[0]);
-    updateVelocityLabel("end2Vel", vels2[1]);
+    updateLabelWithReal("init1Vel", vels[0]);
+    updateLabelWithReal("init2Vel", vels[1]);
+    updateLabelWithReal("end1Vel", vels2[0]);
+    updateLabelWithReal("end2Vel", vels2[1]);
 
     auto vels1_1 = calculateVelocities(apI1Val, apE1Val, lookup.mass);
     auto vels1_2 = calculateVelocities(apI1Val, apE2Val, lookup.mass);
@@ -139,27 +139,83 @@ void onCalculate(Button button)
 
     auto mInd = minIndex(dv_sums);
     auto min = dv_sums[mInd];
-    size_t firstBurnPoint = mInd / 2 + 1;
+    size_t firstBurnInd = mInd / 2;
+    size_t firstBurnTargetInd = mInd % 2;
     auto firstBurnAmount = dv_lookup[mInd][0];
     auto secondBurnAmount = dv_lookup[mInd][1];
     auto firstBurnDest = vels_lookup[mInd][0];
     auto secondBurnDest = vels_lookup[mInd][1];
 
-    updateVelocityLabel("req-dv", min);
+    updateLabelWithReal("req-dv", min);
 
-    string fulltext = format("Start at point %d. Burn %.2f dV to a target " ~
-                             "velocity of %.2f. At the other point, burn by " ~
-                             "%.2f dV to a target velocity of %.2f.",
-                             firstBurnPoint, firstBurnAmount, firstBurnDest,
-                             secondBurnAmount, secondBurnDest);
-    TextView instructions = cast(TextView) builder.getObject("instructions");
-    instructions.getBuffer().setText(fulltext);
-    stdout.writeln(fulltext);
-    stdout.flush();
+    char[] msgBuilder;
+    msgBuilder.reserve(160);
+
+    string startingPointMessage;
+    string endingPointMessage;
+
+    if (apI1Val != apI2Val)
+    {
+      msgBuilder ~= "Start at point ";
+      msgBuilder ~= to!string(firstBurnInd);
+      msgBuilder ~= " (";
+      if (apI1Val > apI2Val)
+      {
+        if (firstBurnInd == 0)
+        {
+          msgBuilder ~= "apoapsis";
+        }
+        else
+        {
+          msgBuilder ~= "periapsis";
+        }
+      }
+      else
+      {
+        if (firstBurnInd == 1)
+        {
+          msgBuilder ~= "apoapsis";
+        }
+        else
+        {
+          msgBuilder ~= "periapsis";
+        }
+      }
+      msgBuilder ~= "). ";
+    }
+
+    size_t targetIndAlternate = (firstBurnTargetInd + 1) % 2;
+    real[] targetApses = [apE1Val - lookup.radius, apE2Val - lookup.radius];
+
+    msgBuilder ~= format("Burn %.2f dV to a target velocity of %.2f, " ~
+                         "bringing the other point to a height of %.2f m (target ",
+                         firstBurnAmount, firstBurnDest,
+                         targetApses[firstBurnTargetInd]);
+
+    if (targetApses[firstBurnTargetInd] > targetApses[targetIndAlternate])
+    {
+      msgBuilder ~= "apoapsis";
+    }
+    else if (targetApses[firstBurnTargetInd] < targetApses[targetIndAlternate])
+    {
+      msgBuilder ~= "periapsis";
+    }
+    else
+    {
+      msgBuilder ~= "height";
+    }
+    msgBuilder ~= "). ";
+
+    msgBuilder ~= format("At the other point, burn by %.2f dV to a target " ~
+                         "velocity of %.2f, bringing the other point to a " ~
+                         "height of %.2f.",
+                         secondBurnAmount, secondBurnDest,
+                         targetApses[targetIndAlternate]);
+    (cast(TextView) builder.getObject("instructions")).getBuffer().setText(msgBuilder.idup);
   }
 }
 
-void updateVelocityLabel(string labelId, real vel)
+void updateLabelWithReal(string labelId, real vel)
 {
   Label label = cast(Label) builder.getObject(labelId);
   label.setText(format("%.2f", vel));
@@ -199,7 +255,7 @@ bool tryGetRealFromEntry(string id, out real val)
 
 void onCalculateDv(Button button)
 {
-  real inputIsp, inputWetMass, inputDryMass, calcDv;
+  real inputIsp, inputWetMass, inputDryMass, calcDv, inputFuelConsumption;
   Label outputLabel;
 
   outputLabel = cast(Label) builder.getObject("calc-dv-label");
@@ -207,10 +263,19 @@ void onCalculateDv(Button button)
   bool ispGood = tryGetRealFromEntry("isp-entry", inputIsp);
   bool wetGood = tryGetRealFromEntry("wet-mass-entry", inputWetMass);
   bool dryGood = tryGetRealFromEntry("dry-mass-entry", inputDryMass);
+  bool consumptionGood = tryGetRealFromEntry("fuel-consumption-entry", inputFuelConsumption);
   if (ispGood && wetGood && dryGood)
   {
     calcDv = calculateShipDeltaV(inputIsp, inputWetMass, inputDryMass);
     outputLabel.setText(format("%.2f", calcDv));
+    if (consumptionGood)
+    {
+      // ISP = Total Force / Consumption Rate
+      real burnTime = (inputWetMass - inputDryMass) / inputFuelConsumption;
+      real avgDeltaV = calcDv / burnTime;
+      updateLabelWithReal("calc-burn-time-label", burnTime);
+      updateLabelWithReal("calc-avg-dv-sec-label", avgDeltaV);
+    }
   }
 }
 
